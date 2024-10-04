@@ -1,0 +1,277 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Soham's Day</title>
+    <style>
+        body {
+            font-family: 'Helvetica', sans-serif;
+            background-color: #f3f4f6;
+            margin: 0;
+            padding: 20px;
+        }
+        .container {
+            max-width: 800px;
+            margin: 0 auto;
+            background-color: #ffffff;
+            border: 2px solid #d6ccc2;
+            padding: 20px;
+            border-radius: 10px;
+            box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
+        }
+        h1 {
+            text-align: center;
+            color: #4a4e69;
+            font-family: 'Courier New', Courier, monospace;
+        }
+        .weekly-planner {
+            display: grid;
+            grid-template-columns: repeat(7, 1fr);
+            gap: 10px;
+            margin-bottom: 20px;
+        }
+        .daily {
+            background-color: #f0efeb;
+            border: 1px solid #d6ccc2;
+            border-radius: 5px;
+            padding: 10px;
+            text-align: center;
+            font-weight: bold;
+            color: #4a4e69;
+            transition: background-color 0.3s ease;
+        }
+        .active-day {
+            background-color: #9a8c98;
+            color: #ffffff;
+        }
+        .schedule, .to-do, .notes {
+            margin-bottom: 20px;
+        }
+        .schedule input, .to-do input, .notes textarea {
+            width: 100%;
+            padding: 10px;
+            border: 1px solid #d6ccc2;
+            border-radius: 5px;
+            font-size: 16px;
+            margin-bottom: 10px;
+        }
+        .notes textarea {
+            height: 100px;
+        }
+        .time-slots {
+            display: flex;
+            justify-content: space-between;
+            margin-bottom: 10px;
+        }
+        .time-slots input {
+            width: 48%;
+        }
+        button {
+            background-color: #4a4e69;
+            color: #fff;
+            border: none;
+            padding: 10px 20px;
+            border-radius: 5px;
+            cursor: pointer;
+            font-size: 16px;
+            width: 100%;
+            transition: background-color 0.3s ease;
+        }
+        button:hover {
+            background-color: #22223b;
+        }
+        #selected-date {
+            font-size: 18px;
+            font-weight: bold;
+            color: #4a4e69;
+            margin-top: 10px;
+            text-align: center;
+            padding: 10px;
+            border: 1px solid #d6ccc2;
+            border-radius: 5px;
+            background-color: #f0efeb;
+        }
+        .task-item {
+            background-color: #f0efeb;
+            border: 1px solid #d6ccc2;
+            border-radius: 5px;
+            margin: 5px 0;
+            padding: 10px;
+            transition: background-color 0.3s ease;
+        }
+        .task-item:hover {
+            background-color: #d6ccc2;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <h1>Soham's Day</h1>
+
+        <label for="date">Select Date: </label>
+        <input type="date" id="date" onchange="highlightDay()">
+        <div id="selected-date"></div>
+
+        <div class="weekly-planner">
+            <div class="daily" id="monday">M</div>
+            <div class="daily" id="tuesday">T</div>
+            <div class="daily" id="wednesday">W</div>
+            <div class="daily" id="thursday">T</div>
+            <div class="daily" id="friday">F</div>
+            <div class="daily" id="saturday">S</div>
+            <div class="daily" id="sunday">S</div>
+        </div>
+
+        <div class="schedule">
+            <h2>Today's Schedule</h2>
+            <div class="time-slots">
+                <input type="time" id="start-time" placeholder="Start Time">
+                <input type="time" id="end-time" placeholder="End Time">
+            </div>
+            <input type="text" id="task" placeholder="Enter task">
+            <button onclick="addTimeSlot()">Add Task</button>
+            <div id="schedule-list"></div>
+        </div>
+
+        <div class="to-do">
+            <h2>Top Priority - To-Do List</h2>
+            <input type="text" placeholder="Task 1">
+            <input type="text" placeholder="Task 2">
+            <input type="text" placeholder="Task 3">
+        </div>
+
+        <div class="notes">
+            <h2>Notes / Reminders</h2>
+            <textarea placeholder="Write your notes here..."></textarea>
+        </div>
+
+        <button onclick="downloadPDF()">Download as PDF</button>
+    </div>
+
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
+    <script>
+        function highlightDay() {
+            const date = new Date(document.getElementById('date').value);
+            const day = date.getDay();
+            document.getElementById('selected-date').innerText = date.toDateString();
+
+            // Clear previous highlights
+            document.querySelectorAll('.daily').forEach(dayElement => {
+                dayElement.classList.remove('active-day');
+            });
+
+            // Highlight the correct day
+            switch(day) {
+                case 0: document.getElementById('sunday').classList.add('active-day'); break;
+                case 1: document.getElementById('monday').classList.add('active-day'); break;
+                case 2: document.getElementById('tuesday').classList.add('active-day'); break;
+                case 3: document.getElementById('wednesday').classList.add('active-day'); break;
+                case 4: document.getElementById('thursday').classList.add('active-day'); break;
+                case 5: document.getElementById('friday').classList.add('active-day'); break;
+                case 6: document.getElementById('saturday').classList.add('active-day'); break;
+            }
+        }
+
+        function addTimeSlot() {
+            const startTime = document.getElementById('start-time').value;
+            const endTime = document.getElementById('end-time').value;
+            const task = document.getElementById('task').value;
+
+            if (!startTime || !endTime || !task) {
+                alert('Please fill out all fields');
+                return;
+            }
+
+            if (new Date(`1970-01-01T${endTime}:00`) <= new Date(`1970-01-01T${startTime}:00`)) {
+                alert('End time must be after start time.');
+                return;
+            }
+
+            const scheduleList = document.getElementById('schedule-list');
+            const taskElement = document.createElement('div');
+            taskElement.className = 'task-item';
+            taskElement.innerHTML = `<strong>${startTime} - ${endTime}:</strong> ${task}`;
+            scheduleList.appendChild(taskElement);
+
+            // Clear the inputs
+            document.getElementById('start-time').value = '';
+            document.getElementById('end-time').value = '';
+            document.getElementById('task').value = '';
+        }
+
+        function downloadPDF() {
+            const { jsPDF } = window.jspdf;
+            const doc = new jsPDF();
+
+            // Title
+            doc.setFontSize(24);
+            doc.setTextColor(34, 34, 59);
+            doc.text('Soham\'s Day Planner', 10, 20);
+            doc.setFontSize(12);
+            doc.setTextColor(74, 78, 105);
+            doc.text('---------------------------------------------', 10, 25);
+
+            // Selected Date
+            const selectedDate = document.getElementById('selected-date').innerText;
+            doc.setFontSize(16);
+            doc.setTextColor(34, 34, 59);
+            doc.text(selectedDate, 10, 35);
+            doc.text('---------------------------------------------', 10, 40);
+            let y = 50;
+
+            // Today's Schedule
+            doc.setFontSize(18);
+            doc.setTextColor(74, 78, 105);
+            doc.text('Today\'s Schedule:', 10, y);
+            y += 10;
+            doc.setTextColor(34, 34, 59);
+            
+            document.querySelectorAll('.task-item').forEach((element) => {
+                const taskText = element.innerHTML.replace(/<\/?strong>/g, ''); // Remove strong tags
+                doc.text(`- ${taskText}`, 10, y);
+                y += 10;
+            });
+
+            // Draw a line
+            doc.text('---------------------------------------------', 10, y);
+            y += 5;
+
+            // To-Do List
+            doc.setFontSize(18);
+            doc.setTextColor(74, 78, 105);
+            doc.text('To-Do List:', 10, y);
+            y += 10;
+
+            document.querySelectorAll('.to-do input').forEach((element) => {
+                const text = element.value;
+                if (text) {
+                    doc.text(`- ${text}`, 10, y);
+                    y += 10;
+                }
+            });
+
+            // Draw a line
+            doc.text('---------------------------------------------', 10, y);
+            y += 5;
+
+            // Notes
+            doc.setFontSize(18);
+            doc.setTextColor(74, 78, 105);
+            doc.text('Notes / Reminders:', 10, y);
+            y += 10;
+
+            const notes = document.querySelector('.notes textarea').value;
+            if (notes) {
+                const noteLines = doc.splitTextToSize(notes, 180); // Wrap text to fit
+                noteLines.forEach(line => {
+                    doc.text(line, 10, y);
+                    y += 10;
+                });
+            }
+
+            doc.save('Soham_Day_Planner.pdf');
+        }
+    </script>
+</body>
+</html>
